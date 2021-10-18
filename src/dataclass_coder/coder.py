@@ -16,7 +16,11 @@ def get_fields(class_: type) -> Dict[str, FieldData]:
     fields: Dict[str, FieldData] = dict()
     for k, f in class_.__dataclass_fields__.items():
         default = None if f.default is MISSING else f.default
-        fields[k] = FieldData(f.name, f.type, default)
+        if hasattr(f.type, '__origin__'):
+            type_ = getattr(f.type, '__args__')[0]
+        else:
+            type_ = f.type
+        fields[k] = FieldData(f.name, type_, default)
     return fields
 
 
