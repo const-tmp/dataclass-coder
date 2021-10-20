@@ -44,6 +44,8 @@ class DataclassCoder:
         self.type_parsers.update({class_: self.parse})
         self.type_serializers.update({class_: self.serialize})
 
+        self._process_nested_types()
+
     def _get_fields(self, class_: type) -> Dict[str, FieldData]:
         fields: Dict[str, FieldData] = dict()
         for k, f in class_.__dataclass_fields__.items():
@@ -55,17 +57,20 @@ class DataclassCoder:
             if is_forwardref(type_):
                 type_ = getattr(__import__(class_.__module__), getattr(type_, '__forward_arg__'))
             fields[k] = FieldData(f.name, type_, default)
-            if type_ != class_ and is_dataclass(type_):
+        return fields
+
+    def _process_nested_types(self):
+        for field in self.fields.values():
+            if field.type not in self.type_parsers and field.type not in self.type_serializers and is_dataclass(field.type):
                 nested_coder = DataclassCoder(
-                    type_,
+                    field.type,
                     field_parsers=self.field_parsers,
                     type_parsers=self.type_parsers,
                     field_serializers=self.field_serializers,
                     type_serializers=self.type_serializers
                 )
-                self.type_parsers[type_] = nested_coder.parse
-                self.type_serializers[type_] = nested_coder.serialize
-        return fields
+                self.type_parsers[field.type] = nested_coder.parse
+                self.type_serializers[field.type] = nested_coder.serialize
 
     def serialize(self, obj: T) -> Dict[str, Any]:
         data = dict()
