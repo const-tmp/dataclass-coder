@@ -15,17 +15,19 @@ class Person:
 
 
 person_coder = DataclassCoder(Person,
-                              field_parsers={'birthday': date.fromisoformat, 'decimal_value': Decimal},
-                              type_serializers={date: date.isoformat, Decimal: str})
-
+                              dict_field_decoders={Person: {'birthday': date.fromisoformat, 'decimal_value': Decimal}},
+                              json_type_encoders={date: date.isoformat, Decimal: str})
 
 data = '{"name": "High Time", "age": 26, "birthday": "1995-04-01", "friend": {"name": "All Cats", "age": 26, "birthday": "1995-04-12"}}'
 
 person = person_coder.from_json(data)
-print(person)  # Person(name='High Time', age=26, birthday=datetime.date(1995, 4, 1), nested_field=NestedField(name='test', decimal_value=Decimal('11.1')))
+print(
+    person)  # Person(name='High Time', age=26, birthday=datetime.date(1995, 4, 1), nested_field=NestedField(name='test', decimal_value=Decimal('11.1')))
 
-person_dict = person_coder.serialize(person)
-print(person_dict)  # {'name': 'High Time', 'age': 26, 'birthday': datetime.date(1995, 4, 1), 'nested_field': {'name': 'test', 'decimal_value': Decimal('11.1')}}
+person_dict = person_coder.to_dict(person)
+print(
+    person_dict)  # {'name': 'High Time', 'age': 26, 'birthday': datetime.date(1995, 4, 1), 'nested_field': {'name': 'test', 'decimal_value': Decimal('11.1')}}
 
 person_json = person_coder.to_json(person)
-print(person_json)  # {"name": "High Time", "age": 26, "birthday": "1995-04-01", "nested_field": {"name": "test", "decimal_value": "11.1"}}
+print(
+    person_json)  # {"name": "High Time", "age": 26, "birthday": "1995-04-01", "nested_field": {"name": "test", "decimal_value": "11.1"}}
